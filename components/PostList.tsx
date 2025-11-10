@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import { Post } from '../types';
-import { getPosts } from '../services/blogService';
-import PostCard from './PostCard';
+import { Post } from '../types.ts';
+import { getPosts } from '../services/blogService.ts';
+import PostCard from './PostCard.tsx';
 
 const PostList: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);

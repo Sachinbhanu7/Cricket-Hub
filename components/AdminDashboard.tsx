@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Post } from '../types';
-import { getPosts, deletePost } from '../services/blogService';
+import { Post } from '../types.ts';
+import { getPosts, deletePost } from '../services/blogService.ts';
 
 const AdminDashboard: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);

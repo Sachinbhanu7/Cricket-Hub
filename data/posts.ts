@@ -1,5 +1,4 @@
-
-import { Post } from '../types';
+import { Post } from '../types.ts';
 
 export let posts: Post[] = [
   {

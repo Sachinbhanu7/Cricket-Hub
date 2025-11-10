@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Post } from '../types';
-import { getPostById, addPost, updatePost } from '../services/blogService';
+import { Post } from '../types.ts';
+import { getPostById, addPost, updatePost } from '../services/blogService.ts';
 
 const PostEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();

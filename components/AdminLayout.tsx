@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import AdminLogin from './AdminLogin';
+import AdminLogin from './AdminLogin.tsx';
 
 // In a real application, this would use a proper authentication context.
 // For this static example, we use simple component state.

@@ -1,13 +1,12 @@
-
 import React from 'react';
 import { HashRouter, Routes, Route, Outlet } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import PostList from './components/PostList';
-import PostDetail from './components/PostDetail';
-import AdminLayout from './components/AdminLayout';
-import AdminDashboard from './components/AdminDashboard';
-import PostEditor from './components/PostEditor';
+import Header from './components/Header.tsx';
+import Footer from './components/Footer.tsx';
+import PostList from './components/PostList.tsx';
+import PostDetail from './components/PostDetail.tsx';
+import AdminLayout from './components/AdminLayout.tsx';
+import AdminDashboard from './components/AdminDashboard.tsx';
+import PostEditor from './components/PostEditor.tsx';
 
 const MainLayout: React.FC = () => (
   <div className="flex flex-col min-h-screen">

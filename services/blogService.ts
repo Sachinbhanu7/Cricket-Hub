@@ -1,6 +1,5 @@
-
-import { posts as mockPosts } from '../data/posts';
-import { Post } from '../types';
+import { posts as mockPosts } from '../data/posts.ts';
+import { Post } from '../types.ts';
 
 // This is a mock service. In a real application, these functions would
 // make API calls to a backend server to fetch, create, update, and delete posts.
