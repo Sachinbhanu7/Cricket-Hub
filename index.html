@@ -291,13 +291,13 @@ const PostDetail = () => {
 };
 
 // --- From components/AdminLogin.tsx ---
-// The correct SHA-256 hash for the password "IPLBlog@7"
 const MOCK_PASSWORD_HASH = '63f3e23cb69d5dbde2b285e18adcb57ec1c59f4c77b8dd12f05e24973f8eeb59';
 const SECRET_PHRASE = 'cricadmin';
 
-async function sha256(message) {
-  const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+async function sha256(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   return hashHex;
@@ -394,8 +394,6 @@ const AdminLayout = () => {
     if (success) {
       sessionStorage.setItem('isAdminAuthenticated', 'true');
       setIsAuthenticated(true);
-    } else {
-      sessionStorage.removeItem('isAdminAuthenticated');
     }
   };
   
