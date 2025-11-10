@@ -328,12 +328,25 @@ const AdminLogin = ({ onLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const inputHash = await sha256(password);
-    if (inputHash === MOCK_PASSWORD_HASH) {
-      setError('');
-      onLogin(true);
-    } else {
-      setError('Incorrect password.');
+    setError(''); // Clear previous errors
+
+    if (!window.crypto || !window.crypto.subtle) {
+      setError('Crypto API not available. Please use a secure (HTTPS) connection.');
+      onLogin(false);
+      return;
+    }
+
+    try {
+      const inputHash = await sha256(password);
+      if (inputHash === MOCK_PASSWORD_HASH) {
+        onLogin(true);
+      } else {
+        setError('Incorrect password.');
+        onLogin(false);
+      }
+    } catch (err) {
+      console.error('Hashing failed:', err);
+      setError('An error occurred during login. Check console for details.');
       onLogin(false);
     }
   };
