@@ -273,28 +273,10 @@ const PostEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
-  const [editorContent, setEditorContent] = useState('');
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(id);
   const quillRef = useRef(null);
   const quillInstanceRef = useRef(null);
-  const [isQuillInitialized, setIsQuillInitialized] = useState(false);
-
-  useEffect(() => {
-    if (isEditing) {
-      setLoading(true);
-      getPostById(id).then(post => {
-        if (post) {
-          setTitle(post.title || '');
-          setEditorContent(post.content || '');
-        }
-        setLoading(false);
-      }).catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
-    }
-  }, [id, isEditing]);
 
   useEffect(() => {
     if (quillRef.current && !quillInstanceRef.current) {
@@ -312,15 +294,28 @@ const PostEditor = () => {
         },
         placeholder: 'Start writing your story here...',
       });
-      setIsQuillInitialized(true);
     }
-  }, []);
 
-  useEffect(() => {
-    if (isQuillInitialized && quillInstanceRef.current && quillInstanceRef.current.root.innerHTML !== editorContent) {
-        quillInstanceRef.current.root.innerHTML = editorContent;
+    const quill = quillInstanceRef.current;
+    if (quill) {
+      if (isEditing) {
+        setLoading(true);
+        getPostById(id).then(post => {
+          if (post) {
+            setTitle(post.title || '');
+            quill.root.innerHTML = post.content || '';
+          }
+          setLoading(false);
+        }).catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
+      } else {
+        setTitle('');
+        quill.root.innerHTML = '';
+      }
     }
-  }, [isQuillInitialized, editorContent]);
+  }, [id, isEditing]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -335,8 +330,6 @@ const PostEditor = () => {
     tempDiv.innerHTML = finalContent;
     const images = tempDiv.querySelectorAll('img');
     
-    // Find the first image in the content to use as the cover image.
-    // The image src will be a base64 data URI if newly added.
     let firstImageUrl = null;
     if (images.length > 0) {
         firstImageUrl = images[0].src;
