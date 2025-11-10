@@ -387,13 +387,17 @@ const AdminLogin = ({ onLogin }) => {
 
 // --- From components/AdminLayout.tsx ---
 const AdminLayout = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('isAdminAuthenticated') === 'true');
 
   const handleLogin = (success) => {
-    if (success) { setIsAuthenticated(true); }
+    if (success) {
+      sessionStorage.setItem('isAdminAuthenticated', 'true');
+      setIsAuthenticated(true);
+    }
   };
   
   const handleLogout = () => {
+    sessionStorage.removeItem('isAdminAuthenticated');
     setIsAuthenticated(false);
   }
 
