@@ -305,9 +305,9 @@ const PostEditor = () => {
             setTitle(post.title || '');
             quill.root.innerHTML = post.content || '';
           }
-          setLoading(false);
         }).catch(err => {
           console.error(err);
+        }).finally(() => {
           setLoading(false);
         });
       } else {
@@ -341,7 +341,7 @@ const PostEditor = () => {
 
     const postData = {
       title,
-      content: finalContent, // The content now contains base64 encoded images
+      content: finalContent,
       author: 'Admin',
       excerpt,
       imageUrl,
@@ -366,10 +366,13 @@ const PostEditor = () => {
     }
   };
 
-  if (loading && isEditing) return <p>Loading post data...</p>;
-
   return (
-    <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md">
+    <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-md relative">
+      {loading && isEditing && (
+        <div className="absolute inset-0 bg-white bg-opacity-80 flex justify-center items-center z-10 rounded-lg">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      )}
       <h2 className="text-3xl font-bold mb-6">{isEditing ? 'Edit Post' : 'Create New Post'}</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
