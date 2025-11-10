@@ -24,6 +24,7 @@
         }
       }
     </script>
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
     <script type="importmap">
 {
   "imports": {
@@ -39,7 +40,7 @@
   <body class="bg-base-100 text-neutral">
     <div id="root"></div>
     <script type="text/babel" data-type="module">
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { HashRouter, Routes, Route, Outlet, Link, NavLink, useParams, useNavigate } from 'react-router-dom';
 
@@ -48,29 +49,20 @@ let posts_data = [
   {
     id: '1',
     title: 'The Rise of Modern Frontend Frameworks',
-    content: 'In the ever-evolving landscape of web development...',
-    author: 'Jane Doe',
+    content: '<p>In the ever-evolving landscape of web development, frontend frameworks have become essential tools for building complex and interactive user interfaces. This article explores the history and future of frameworks like React, Angular, and Vue.</p><img src="https://picsum.photos/seed/frameworks/800/400" alt="Code on a screen" /><p>We will delve into their core philosophies, performance characteristics, and community support to help you choose the right one for your next project.</p>',
     date: '2023-10-26',
-    imageUrl: 'https://picsum.photos/seed/frameworks/800/400',
-    excerpt: 'A deep dive into the evolution and comparison of popular frontend frameworks like React, Angular, and Vue.'
   },
   {
     id: '2',
     title: 'Mastering TypeScript for Scalable Applications',
-    content: 'TypeScript, a statically typed superset of JavaScript...',
-    author: 'John Smith',
+    content: '<p>TypeScript, a statically typed superset of JavaScript, brings type safety and advanced tooling to large-scale JavaScript projects. Discover how its features can help you write more maintainable and error-free code.</p><img src="https://picsum.photos/seed/typescript/800/400" alt="TypeScript code" /><p>This post covers everything from basic types to advanced concepts like generics and decorators.</p>',
     date: '2023-10-22',
-    imageUrl: 'https://picsum.photos/seed/typescript/800/400',
-    excerpt: 'Learn how to leverage TypeScript to build more robust, scalable, and error-free web applications.'
   },
   {
     id: '3',
     title: 'The Art of UI/UX: Creating User-Centric Designs',
-    content: 'A visually stunning application is only half the battle...',
-    author: 'Alex Johnson',
+    content: '<p>A visually stunning application is only half the battle; a great user experience (UX) is what truly sets successful products apart. This article explores fundamental UI/UX principles for creating intuitive and delightful digital products.</p><p>We will cover user research, wireframing, prototyping, and accessibility best practices.</p><img src="https://picsum.photos/seed/uiux/800/400" alt="UI/UX design sketches" />',
     date: '2023-10-18',
-    imageUrl: 'https://picsum.photos/seed/uiux/800/400',
-    excerpt: 'An exploration of the core principles of UI/UX design, focusing on creating intuitive and accessible user experiences.'
   }
 ];
 
@@ -99,18 +91,35 @@ const Header = () => {
 
 const Footer = () => (<footer className="bg-neutral text-white mt-auto"><div className="container mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center">&copy; {new Date().getFullYear()} Cricket Hub. All rights reserved.</div></footer>);
 
-const PostCard = ({post})=>(
-  <div className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-    <Link to={`/post/${post.id}`} className="block">
-      <img className="w-full h-48 object-cover" src={post.imageUrl} alt={post.title} />
-      <div className="p-6">
-        <h2 className="text-2xl font-bold mb-2 text-neutral hover:text-primary">{post.title}</h2>
-        <p className="text-gray-500 text-sm mb-4">By {post.author} on {new Date(post.date).toLocaleDateString()}</p>
-        <p className="text-gray-700 leading-relaxed">{post.excerpt}</p>
-      </div>
-    </Link>
-  </div>
-);
+const PostCard = ({post})=>{
+  const extractImageUrl = (htmlContent) => {
+    if (!htmlContent) return 'https://picsum.photos/seed/placeholder/800/400';
+    const match = htmlContent.match(/<img.*?src="([^"]+)"/);
+    return match ? match[1] : 'https://picsum.photos/seed/placeholder/800/400';
+  };
+
+  const createExcerpt = (htmlContent, length = 120) => {
+    if (!htmlContent) return '';
+    const text = htmlContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return text.length > length ? text.substring(0, length) + '...' : text;
+  };
+
+  const imageUrl = extractImageUrl(post.content);
+  const excerpt = createExcerpt(post.content);
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+      <Link to={`/post/${post.id}`} className="block">
+        <img className="w-full h-48 object-cover" src={imageUrl} alt={post.title} />
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-2 text-neutral hover:text-primary">{post.title}</h2>
+          <p className="text-gray-500 text-sm mb-4">Posted on {new Date(post.date).toLocaleDateString()}</p>
+          <p className="text-gray-700 leading-relaxed">{excerpt}</p>
+        </div>
+      </Link>
+    </div>
+  );
+};
 
 const PostList = () => {
   const [posts,setPosts]=useState([]); const [loading,setLoading]=useState(true);
@@ -131,10 +140,9 @@ const PostDetail = () => {
   if(!post) return <div className="text-center py-10"><h2 className="text-2xl font-bold">Post not found</h2><Link to="/" className="text-primary hover:underline mt-4 inline-block">Back to Home</Link></div>;
   return (
     <article className="max-w-4xl mx-auto bg-white p-6 sm:p-8 lg:p-12 rounded-lg shadow-xl">
-      <img className="w-full h-64 md:h-96 object-cover rounded-md mb-8" src={post.imageUrl} alt={post.title} />
       <h1 className="text-4xl md:text-5xl font-extrabold text-neutral mb-4 leading-tight">{post.title}</h1>
-      <p className="text-gray-500 mb-8">By <span className="font-semibold">{post.author}</span> on {new Date(post.date).toLocaleDateString()}</p>
-      <div className="prose lg:prose-xl max-w-none text-gray-800 whitespace-pre-wrap">{post.content}</div>
+      <p className="text-gray-500 mb-8">Posted on {new Date(post.date).toLocaleDateString()}</p>
+      <div className="prose lg:prose-xl max-w-none text-gray-800" dangerouslySetInnerHTML={{ __html: post.content }}></div>
       <div className="mt-12 border-t pt-8"><Link to="/" className="text-primary hover:text-secondary font-semibold transition-colors">&larr; Back to all articles</Link></div>
     </article>
   );
@@ -219,7 +227,7 @@ const AdminDashboard = () => {
   const [posts,setPosts]=useState([]); const [loading,setLoading]=useState(true);
   const fetchPosts=useCallback(async()=>{ setLoading(true); const data=await getPosts(); setPosts(data); setLoading(false); },[]);
   useEffect(()=>{ fetchPosts(); },[fetchPosts]);
-  const handleDelete=async(id)=>{ if(window.confirm('Are you sure?')){ await deletePost(id); fetchPosts(); } };
+  const handleDelete=async(id)=>{ if(window.confirm('Are you sure you want to delete this post?')){ await deletePost(id); fetchPosts(); } };
   if(loading) return <p>Loading posts...</p>;
   return (
     <div className="bg-white p-8 rounded-lg shadow-md">
@@ -232,7 +240,6 @@ const AdminDashboard = () => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
               <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
             </tr>
@@ -241,7 +248,6 @@ const AdminDashboard = () => {
             {posts.map(p=>(
               <tr key={p.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.title}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.author}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(p.date).toLocaleDateString()}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                   <Link to={`/admin/edit/${p.id}`} className="text-accent hover:text-secondary">Edit</Link>
@@ -257,28 +263,97 @@ const AdminDashboard = () => {
 };
 
 const PostEditor = () => {
-  const {id} = useParams(); const navigate=useNavigate();
-  const [data,setData]=useState({title:'',content:'',author:'',imageUrl:'',excerpt:''});
-  const [loading,setLoading]=useState(false); const isEditing=Boolean(id);
-  useEffect(()=>{ if(isEditing){ setLoading(true); getPostById(id).then(post=>{ if(post) setData({...post}); setLoading(false); }); } },[id,isEditing]);
-  const handleChange=(e)=>{ const {name,value}=e.target; setData(prev=>({...prev,[name]:value})); };
-  const handleSubmit=async(e)=>{ e.preventDefault(); setLoading(true); try{ if(isEditing) await updatePost(id,data); else await addPost(data); navigate('/admin'); } catch(err){console.error(err);} finally{setLoading(false);} };
-  if(loading && isEditing) return <p>Loading post data...</p>;
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
+  const isEditing = Boolean(id);
+  const editorRef = useRef(null);
+  const [isEditorInitialized, setIsEditorInitialized] = useState(false);
+
+  useEffect(() => {
+    tinymce.init({
+      selector: '#post-content-editor',
+      plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+      toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+      height: 600,
+      menubar: false,
+      setup: (editor) => {
+        editorRef.current = editor;
+        editor.on('init', () => {
+          setIsEditorInitialized(true);
+        });
+      }
+    });
+    return () => {
+      tinymce.get('post-content-editor')?.destroy();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isEditing) {
+      setLoading(true);
+      getPostById(id).then(post => {
+        if (post) {
+          setTitle(post.title);
+          setContent(post.content);
+        }
+        setLoading(false);
+      });
+    } else {
+      setTitle('');
+      setContent('');
+    }
+  }, [id, isEditing]);
+
+  useEffect(() => {
+    if (isEditorInitialized && editorRef.current) {
+      editorRef.current.setContent(content);
+    }
+  }, [content, isEditorInitialized]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!editorRef.current) return;
+    setLoading(true);
+    const currentContent = editorRef.current.getContent();
+    const postData = { title, content: currentContent };
+    try {
+      if (isEditing) await updatePost(id, postData);
+      else await addPost(postData);
+      navigate('/admin');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && isEditing) return <div className="text-center p-8">Loading post...</div>;
+
   return (
     <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-3xl font-bold mb-6">{isEditing?'Edit Post':'Create New Post'}</h2>
+      <h2 className="text-3xl font-bold mb-6">{isEditing ? 'Edit Post' : 'Create New Post'}</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-        {['title','author','imageUrl','excerpt','content'].map(field=>(
-          <div key={field}>
-            <label className="block text-sm font-medium text-gray-700">{field.charAt(0).toUpperCase()+field.slice(1)}</label>
-            {field==='content'||field==='excerpt'?<textarea name={field} rows={field==='content'?10:3} value={data[field]} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"/>:<input type="text" name={field} value={data[field]} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"/>}
-          </div>
-        ))}
-        <button type="submit" className="bg-primary text-white px-6 py-2 rounded-md hover:bg-secondary">{isEditing?'Update':'Create'}</button>
+        <div>
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+          <input type="text" name="title" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+          <textarea id="post-content-editor"></textarea>
+        </div>
+        <div>
+          <button type="submit" disabled={loading || !isEditorInitialized} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:bg-gray-400">
+            {loading ? 'Saving...' : (isEditing ? 'Update Post' : 'Create Post')}
+          </button>
+        </div>
       </form>
     </div>
   );
 };
+
 
 // --- App ---
 const App = () => (
