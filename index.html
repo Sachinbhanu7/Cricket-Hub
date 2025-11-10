@@ -238,6 +238,10 @@ const AdminLogin = ({onLogin}) => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-6">Admin Login</h2>
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
+          <p className="font-bold">Security Warning</p>
+          <p>This login method is for demonstration only and is not secure. For a live website, please implement a proper authentication system like Firebase Authentication.</p>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">Password</label>
