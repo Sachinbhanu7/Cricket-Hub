@@ -47,7 +47,6 @@ import { HashRouter, Routes, Route, Outlet, Link, NavLink, useParams, useNavigat
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // --- Firebase Config & Initialization ---
 const firebaseConfig = {
@@ -62,7 +61,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 const postsCollectionRef = collection(db, 'posts');
 
 // --- Blog Service (Firebase Implementation) ---
@@ -271,16 +269,6 @@ const AdminDashboard = () => {
   );
 };
 
-const base64ToBlob = (base64, mimeType) => {
-  const byteCharacters = atob(base64.split(',')[1]);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-  return new Blob([byteArray], { type: mimeType });
-};
-
 const PostEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -342,52 +330,25 @@ const PostEditor = () => {
     }
     setLoading(true);
 
-    let finalContent = quillInstanceRef.current ? quillInstanceRef.current.root.innerHTML : '';
+    const finalContent = quillInstanceRef.current ? quillInstanceRef.current.root.innerHTML : '';
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = finalContent;
     const images = tempDiv.querySelectorAll('img');
+    
+    // Find the first image in the content to use as the cover image.
+    // The image src will be a base64 data URI if newly added.
     let firstImageUrl = null;
-    const uploadPromises = [];
-
-    images.forEach(img => {
-      if (img.src.startsWith('data:image')) {
-        const promise = new Promise(async (resolve, reject) => {
-          try {
-            const mimeType = img.src.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/)[1];
-            const blob = base64ToBlob(img.src, mimeType);
-            const storageRef = ref(storage, `images/${Date.now()}-${Math.random().toString(36).substring(2, 8)}`);
-            const snapshot = await uploadBytes(storageRef, blob);
-            const downloadURL = await getDownloadURL(snapshot.ref);
-            img.src = downloadURL;
-            if (!firstImageUrl) firstImageUrl = downloadURL;
-            resolve();
-          } catch (error) {
-            console.error("Image upload failed:", error);
-            reject(error);
-          }
-        });
-        uploadPromises.push(promise);
-      } else if (!firstImageUrl) {
-          firstImageUrl = img.src;
-      }
-    });
-
-    try {
-      await Promise.all(uploadPromises);
-    } catch (error) {
-      alert('Some images failed to upload. Please try again.');
-      setLoading(false);
-      return;
+    if (images.length > 0) {
+        firstImageUrl = images[0].src;
     }
 
-    finalContent = tempDiv.innerHTML;
     const textContent = tempDiv.textContent || "";
     const excerpt = textContent.substring(0, 150) + (textContent.length > 150 ? '...' : '');
     const imageUrl = firstImageUrl || `https://picsum.photos/seed/${title.trim().replace(/\s+/g, '-') || 'post'}/800/400`;
 
     const postData = {
       title,
-      content: finalContent,
+      content: finalContent, // The content now contains base64 encoded images
       author: 'Admin',
       excerpt,
       imageUrl,
@@ -402,7 +363,11 @@ const PostEditor = () => {
       navigate('/admin');
     } catch (err) {
       console.error("Failed to save post:", err);
-      alert('An error occurred while saving the post.');
+      let friendlyError = `An error occurred while saving the post. Please check your Firestore rules. Error: ${err.message}`;
+      if (err.code === 'resource-exhausted' || (err.message && err.message.toLowerCase().includes('too large'))) {
+          friendlyError = 'Failed to save post. The content, including images, is too large. Firestore documents have a 1MB size limit. Please try using smaller or fewer images.';
+      }
+      alert(friendlyError);
     } finally {
       setLoading(false);
     }
