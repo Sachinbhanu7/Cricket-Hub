@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cricket Hub</title>
+    <title>Loading Cricket Hub...</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
@@ -72,6 +72,50 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const postsCollectionRef = collection(db, 'posts');
+
+// --- SEO Helper Functions ---
+const setMetaTag = (attr, attrValue, content) => {
+    const head = document.head;
+    let element = head.querySelector(`meta[${attr}="${attrValue}"]`);
+    if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attr, attrValue);
+        head.appendChild(element);
+    }
+    element.setAttribute('content', content);
+};
+
+const setLinkTag = (rel, href) => {
+    const head = document.head;
+    let element = head.querySelector(`link[rel="${rel}"]`);
+    if (!element) {
+        element = document.createElement('link');
+        element.setAttribute('rel', rel);
+        head.appendChild(element);
+    }
+    element.setAttribute('href', href);
+};
+
+const setStructuredData = (data) => {
+    const head = document.head;
+    let element = head.querySelector('script[type="application/ld+json"]');
+    if (!element) {
+        element = document.createElement('script');
+        element.setAttribute('type', 'application/ld+json');
+        head.appendChild(element);
+    }
+    element.textContent = JSON.stringify(data);
+};
+
+const removeMetaTagByAttr = (attr, attrValue) => {
+    const element = document.head.querySelector(`meta[${attr}="${attrValue}"]`);
+    if (element) element.remove();
+};
+
+const removeStructuredData = () => {
+    const element = document.head.querySelector('script[type="application/ld+json"]');
+    if (element) element.remove();
+};
 
 // --- Blog Service (Firebase Implementation) ---
 const getPosts = async () => {
@@ -152,7 +196,22 @@ const PostCard = ({post})=>(
 
 const PostList = () => {
   const [posts,setPosts]=useState([]); const [loading,setLoading]=useState(true);
-  useEffect(()=>{ const fetchPosts=async()=>{ setLoading(true); const data=await getPosts(); setPosts(data); setLoading(false); }; fetchPosts(); },[]);
+  useEffect(()=>{
+    document.title = 'Cricket Hub - Latest Articles and News';
+    setMetaTag('name', 'description', 'Your one-stop destination for the latest cricket news, articles, match analysis, and player insights. Stay updated with Cricket Hub.');
+    setMetaTag('property', 'og:title', 'Cricket Hub - Latest Articles and News');
+    setMetaTag('property', 'og:description', 'Your one-stop destination for the latest cricket news, articles, match analysis, and player insights.');
+    setMetaTag('property', 'og:type', 'website');
+    setMetaTag('property', 'og:url', window.location.origin);
+    setMetaTag('property', 'og:image', 'https://picsum.photos/seed/crickethub/1200/630');
+    setMetaTag('name', 'twitter:card', 'summary_large_image');
+    setLinkTag('canonical', window.location.origin);
+    removeStructuredData();
+    removeMetaTagByAttr('name', 'robots'); // Ensure admin 'noindex' is removed
+
+    const fetchPosts=async()=>{ setLoading(true); const data=await getPosts(); setPosts(data); setLoading(false); };
+    fetchPosts();
+  },[]);
 
   if(loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div></div>;
 
@@ -180,9 +239,60 @@ const PostList = () => {
 
 const PostDetail = () => {
   const {id}=useParams(); const [post,setPost]=useState(null); const [loading,setLoading]=useState(true);
-  useEffect(()=>{ if(id){ const fetchPost=async()=>{ setLoading(true); const data=await getPostById(id); setPost(data||null); setLoading(false); }; fetchPost(); } },[id]);
+  
+  useEffect(()=>{
+    if(id){
+      const fetchPost=async()=>{ setLoading(true); const data=await getPostById(id); setPost(data || null); setLoading(false); };
+      fetchPost();
+    }
+    return () => { removeStructuredData(); }; // Cleanup on unmount
+  },[id]);
+
+  useEffect(() => {
+    if (post) {
+      const postUrl = `${window.location.origin}/#/post/${post.id}`;
+      document.title = `${post.title} | Cricket Hub`;
+      setMetaTag('name', 'description', post.excerpt);
+      setMetaTag('property', 'og:title', post.title);
+      setMetaTag('property', 'og:description', post.excerpt);
+      setMetaTag('property', 'og:type', 'article');
+      setMetaTag('property', 'og:url', postUrl);
+      setMetaTag('property', 'og:image', post.imageUrl);
+      setMetaTag('name', 'twitter:card', 'summary_large_image');
+      setLinkTag('canonical', postUrl);
+      removeMetaTagByAttr('name', 'robots');
+
+      setStructuredData({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": post.title,
+        "image": post.imageUrl,
+        "datePublished": post.date,
+        "author": {
+          "@type": "Person",
+          "name": post.author
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Cricket Hub",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://picsum.photos/seed/crickethub-logo/600/60"
+          }
+        },
+        "description": post.excerpt
+      });
+    }
+  }, [post]);
+
   if(loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div></div>;
-  if(!post) return <div className="text-center py-10"><h2 className="text-2xl font-bold">Post not found</h2><Link to="/" className="text-primary hover:underline mt-4 inline-block">Back to Home</Link></div>;
+  
+  if(!post) {
+    document.title = 'Post Not Found | Cricket Hub';
+    setMetaTag('name', 'robots', 'noindex');
+    return <div className="text-center py-10"><h2 className="text-2xl font-bold">Post not found</h2><Link to="/" className="text-primary hover:underline mt-4 inline-block">Back to Home</Link></div>;
+  }
+  
   return (
     <article className="max-w-4xl mx-auto bg-white p-6 sm:p-8 lg:p-12 rounded-lg shadow-xl">
       <img className="w-full h-64 md:h-96 object-cover rounded-md mb-8" src={post.imageUrl} alt={post.title} />
@@ -209,6 +319,11 @@ const AdminLogin = () => {
   const [seq, setSeq] = useState('');
   const [loading, setLoading] = useState(false);
   
+  useEffect(() => {
+    document.title = 'Admin Login | Cricket Hub';
+    setMetaTag('name', 'robots', 'noindex, nofollow');
+  }, []);
+
   useEffect(()=>{
     if(showLogin) return;
     let timeoutId;
@@ -277,6 +392,11 @@ const AdminLogin = () => {
 const AdminLayout = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    document.title = 'Admin Panel | Cricket Hub';
+    setMetaTag('name', 'robots', 'noindex, nofollow');
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
