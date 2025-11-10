@@ -39,7 +39,556 @@
 </head>
   <body class="bg-base-100 text-neutral">
     <div id="root"></div>
-    <!-- Changed script type to let Babel handle it -->
-    <script type="text/babel" data-type="module" src="./index.tsx"></script>
+    <!-- 
+      ALL APPLICATION CODE IS NOW IN THIS SINGLE SCRIPT BLOCK.
+      This avoids all file loading and MIME type errors on GitHub Pages.
+    -->
+    <script type="text/babel" data-type="module">
+// --- Start of Combined Application Code ---
+
+// Imports from CDN via importmap
+import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom/client';
+import { HashRouter, Routes, Route, Outlet, Link, NavLink, useParams, useNavigate } from 'react-router-dom';
+
+// --- From data/posts.ts ---
+let posts_data = [
+  {
+    id: '1',
+    title: 'The Rise of Modern Frontend Frameworks',
+    content: `
+In the ever-evolving landscape of web development, frontend frameworks have become the cornerstone of building modern, interactive, and performant web applications. From the declarative nature of React to the comprehensive ecosystem of Angular and the approachable simplicity of Vue, developers have a plethora of powerful tools at their disposal.
+
+This post delves into the history and evolution of these frameworks, comparing their core philosophies and architectures. We'll explore the concept of the Virtual DOM, the rise of component-based architecture, and how state management libraries like Redux and Vuex have revolutionized how we handle application data. We'll also touch upon the newcomers like Svelte, which shifts much of the work to compile time, promising even faster and more efficient applications.
+
+Join us as we journey through the timeline of frontend development, celebrating the innovations that have made the web the rich, dynamic platform it is today.
+    `,
+    author: 'Jane Doe',
+    date: '2023-10-26',
+    imageUrl: 'https://picsum.photos/seed/frameworks/800/400',
+    excerpt: 'A deep dive into the evolution and comparison of popular frontend frameworks like React, Angular, and Vue.'
+  },
+  {
+    id: '2',
+    title: 'Mastering TypeScript for Scalable Applications',
+    content: `
+TypeScript, a statically typed superset of JavaScript, has taken the development world by storm. By adding types to JavaScript, it helps catch errors early in the development process, improves code readability and maintainability, and provides a superior developer experience with features like autocompletion and code navigation.
+
+This article serves as a comprehensive guide to mastering TypeScript. We'll start with the basics of types, interfaces, and enums, and then move on to more advanced topics like generics, utility types, and decorators. You'll learn how to configure your TypeScript project for optimal performance and type safety, and how to integrate it seamlessly with popular frameworks like React and Node.js.
+
+Whether you're a seasoned JavaScript developer looking to level up your skills or a newcomer to the language, this guide will provide you with the knowledge and best practices needed to build robust and scalable applications with TypeScript.
+    `,
+    author: 'John Smith',
+    date: '2023-10-22',
+    imageUrl: 'https://picsum.photos/seed/typescript/800/400',
+    excerpt: 'Learn how to leverage TypeScript to build more robust, scalable, and error-free web applications.'
+  },
+  {
+    id: '3',
+    title: 'The Art of UI/UX: Creating User-Centric Designs',
+    content: `
+A visually stunning application is only half the battle; without a thoughtful and intuitive user experience (UX), even the most beautiful user interface (UI) can fall flat. The art of UI/UX design is about understanding your users, anticipating their needs, and creating a seamless and enjoyable journey for them.
+
+In this piece, we explore the fundamental principles of user-centric design. We'll cover topics such as user research, persona creation, wireframing, prototyping, and usability testing. We'll also discuss the importance of accessibility, ensuring that your application is usable by everyone, regardless of their abilities.
+
+Discover how to balance aesthetics with functionality, create clear information architecture, and use visual hierarchy to guide your users' attention. By the end of this read, you'll have a better appreciation for the intricate dance between UI and UX, and be equipped with the principles to create designs that not only look good but feel great to use.
+    `,
+    author: 'Alex Johnson',
+    date: '2023-10-18',
+    imageUrl: 'https://picsum.photos/seed/uiux/800/400',
+    excerpt: 'An exploration of the core principles of UI/UX design, focusing on creating intuitive and accessible user experiences.'
+  }
+];
+
+// --- From services/blogService.ts ---
+let posts = [...posts_data];
+
+const getPosts = async () => {
+  await new Promise(res => setTimeout(res, 200));
+  return [...posts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
+const getPostById = async (id) => {
+  await new Promise(res => setTimeout(res, 200));
+  return posts.find(post => post.id === id);
+};
+
+const addPost = async (postData) => {
+  await new Promise(res => setTimeout(res, 200));
+  const newPost = {
+    ...postData,
+    id: Date.now().toString(),
+    date: new Date().toISOString().split('T')[0],
+  };
+  posts.push(newPost);
+  return newPost;
+};
+
+const updatePost = async (id, postData) => {
+  await new Promise(res => setTimeout(res, 200));
+  const postIndex = posts.findIndex(p => p.id === id);
+  if (postIndex > -1) {
+    posts[postIndex] = { ...posts[postIndex], ...postData };
+    return posts[postIndex];
+  }
+  return undefined;
+};
+
+const deletePost = async (id) => {
+  await new Promise(res => setTimeout(res, 200));
+  const initialLength = posts.length;
+  posts = posts.filter(p => p.id !== id);
+  return posts.length < initialLength;
+};
+
+// --- From components/Header.tsx ---
+const Header = () => {
+  const activeLinkStyle = {
+    color: '#3B82F6',
+    textDecoration: 'underline',
+  };
+
+  return (
+    <header className="bg-neutral shadow-md sticky top-0 z-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex-shrink-0">
+            <Link to="/" className="text-2xl font-bold text-white hover:text-accent transition-colors">
+              Cricet Hub
+            </Link>
+          </div>
+          <nav className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-4">
+              <NavLink
+                to="/"
+                className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                style={({ isActive }) => isActive ? activeLinkStyle : undefined}
+              >
+                Home
+              </NavLink>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+// --- From components/Footer.tsx ---
+const Footer = () => {
+  return (
+    <footer className="bg-neutral text-white mt-auto">
+      <div className="container mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center">
+        <p>&copy; {new Date().getFullYear()} Cricet Hub. All rights reserved.</p>
+      </div>
+    </footer>
+  );
+};
+
+// --- From components/PostCard.tsx ---
+const PostCard = ({ post }) => {
+  return (
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+      <Link to={`/post/${post.id}`} className="block">
+        <img className="w-full h-48 object-cover" src={post.imageUrl} alt={post.title} />
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-2 text-neutral hover:text-primary">{post.title}</h2>
+          <p className="text-gray-500 text-sm mb-4">By {post.author} on {new Date(post.date).toLocaleDateString()}</p>
+          <p className="text-gray-700 leading-relaxed">{post.excerpt}</p>
+        </div>
+      </Link>
+    </div>
+  );
+};
+
+// --- From components/PostList.tsx ---
+const PostList = () => {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      const fetchedPosts = await getPosts();
+      setPosts(fetchedPosts);
+      setLoading(false);
+    };
+    fetchPosts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1 className="text-4xl font-extrabold text-center mb-12 text-neutral">Latest Articles</h1>
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {posts.map(post => (
+          <PostCard key={post.id} post={post} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- From components/PostDetail.tsx ---
+const PostDetail = () => {
+  const { id } = useParams();
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      const fetchPost = async () => {
+        setLoading(true);
+        const fetchedPost = await getPostById(id);
+        setPost(fetchedPost || null);
+        setLoading(false);
+      };
+      fetchPost();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+        <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+        </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="text-center py-10">
+        <h2 className="text-2xl font-bold">Post not found</h2>
+        <Link to="/" className="text-primary hover:underline mt-4 inline-block">Back to Home</Link>
+      </div>
+    );
+  }
+
+  return (
+    <article className="max-w-4xl mx-auto bg-white p-6 sm:p-8 lg:p-12 rounded-lg shadow-xl">
+      <img className="w-full h-64 md:h-96 object-cover rounded-md mb-8" src={post.imageUrl} alt={post.title} />
+      <h1 className="text-4xl md:text-5xl font-extrabold text-neutral mb-4 leading-tight">{post.title}</h1>
+      <p className="text-gray-500 mb-8">
+        By <span className="font-semibold">{post.author}</span> on {new Date(post.date).toLocaleDateString()}
+      </p>
+      <div className="prose lg:prose-xl max-w-none text-gray-800 whitespace-pre-wrap">
+        {post.content}
+      </div>
+       <div className="mt-12 border-t pt-8">
+            <Link to="/" className="text-primary hover:text-secondary font-semibold transition-colors">
+                &larr; Back to all articles
+            </Link>
+        </div>
+    </article>
+  );
+};
+
+// --- From components/AdminLogin.tsx ---
+const MOCK_PASSWORD_HASH = '2c8c227878fd0ab9508820c7370868453cb118a8027735a78e8741544a45b630';
+const SECRET_PHRASE = 'cricadmin';
+
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
+const AdminLogin = ({ onLogin }) => {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [inputSequence, setInputSequence] = useState('');
+
+  useEffect(() => {
+    if (showLoginForm) return;
+    let timeoutId;
+    const handleKeyDown = (event) => {
+      if (event.key.length > 1) { setInputSequence(''); return; }
+      const newSequence = (inputSequence + event.key.toLowerCase()).slice(-SECRET_PHRASE.length);
+      setInputSequence(newSequence);
+      if (newSequence === SECRET_PHRASE) { setShowLoginForm(true); }
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => { setInputSequence(''); }, 2000);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timeoutId);
+    };
+  }, [inputSequence, showLoginForm]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const inputHash = await sha256(password);
+    if (inputHash === MOCK_PASSWORD_HASH) {
+      setError('');
+      onLogin(true);
+    } else {
+      setError('Incorrect password.');
+      onLogin(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      {showLoginForm ? (
+        <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md transition-opacity duration-500 ease-in-out opacity-100">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-6">Admin Login</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                required
+                autoFocus
+              />
+            </div>
+            {error && <p className="text-error text-sm mb-4">{error}</p>}
+            <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary">
+              Login
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="text-center text-gray-500">
+            <h1 className="text-4xl font-bold mb-4">404</h1>
+            <p className="text-xl">Page Not Found</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- From components/AdminLayout.tsx ---
+const AdminLayout = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const handleLogin = (success) => {
+    if (success) { setIsAuthenticated(true); }
+  };
+  
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  }
+
+  if (!isAuthenticated) {
+    return <AdminLogin onLogin={handleLogin} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+          <button onClick={handleLogout} className="bg-error text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
+            Logout
+          </button>
+        </div>
+      </header>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
+
+// --- From components/AdminDashboard.tsx ---
+const AdminDashboard = () => {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPosts = useCallback(async () => {
+    setLoading(true);
+    const fetchedPosts = await getPosts();
+    setPosts(fetchedPosts);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      await deletePost(id);
+      fetchPosts();
+    }
+  };
+
+  if (loading) return <p>Loading posts...</p>;
+
+  return (
+    <div className="bg-white p-8 rounded-lg shadow-md">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">Manage Posts</h2>
+        <Link to="/admin/new" className="bg-success text-white px-4 py-2 rounded-md hover:bg-green-700">
+          + New Post
+        </Link>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+              <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {posts.map((post) => (
+              <tr key={post.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{post.title}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{post.author}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(post.date).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                  <Link to={`/admin/edit/${post.id}`} className="text-accent hover:text-secondary">Edit</Link>
+                  <button onClick={() => handleDelete(post.id)} className="text-error hover:text-red-700">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// --- From components/PostEditor.tsx ---
+const PostEditor = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [postData, setPostData] = useState({ title: '', content: '', author: '', imageUrl: '', excerpt: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const isEditing = Boolean(id);
+
+  useEffect(() => {
+    if (isEditing) {
+      setIsLoading(true);
+      getPostById(id).then(post => {
+        if (post) {
+          setPostData({ title: post.title, content: post.content, author: post.author, imageUrl: post.imageUrl, excerpt: post.excerpt });
+        }
+        setIsLoading(false);
+      });
+    }
+  }, [id, isEditing]);
+  
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setPostData(prev => ({...prev, [name]: value}));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      if (isEditing) {
+        await updatePost(id, postData);
+      } else {
+        await addPost(postData);
+      }
+      navigate('/admin');
+    } catch (error) {
+      console.error("Failed to save post", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  if (isLoading && isEditing) return <p>Loading post data...</p>;
+
+  return (
+    <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+      <h2 className="text-3xl font-bold mb-6">{isEditing ? 'Edit Post' : 'Create New Post'}</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+          <input type="text" name="title" id="title" value={postData.title} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"/>
+        </div>
+        <div>
+          <label htmlFor="author" className="block text-sm font-medium text-gray-700">Author</label>
+          <input type="text" name="author" id="author" value={postData.author} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"/>
+        </div>
+        <div>
+          <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">Image URL</label>
+          <input type="text" name="imageUrl" id="imageUrl" value={postData.imageUrl} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"/>
+        </div>
+        <div>
+          <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700">Excerpt</label>
+          <textarea name="excerpt" id="excerpt" rows={3} value={postData.excerpt} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"/>
+        </div>
+        <div>
+          <label htmlFor="content" className="block text-sm font-medium text-gray-700">Content</label>
+          <textarea name="content" id="content" rows={10} value={postData.content} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"/>
+        </div>
+        <div className="flex justify-end space-x-4">
+            <button type="button" onClick={() => navigate('/admin')} className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancel</button>
+            <button type="submit" disabled={isLoading} className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary disabled:bg-gray-400">
+              {isLoading ? 'Saving...' : 'Save Post'}
+            </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+
+// --- From App.tsx ---
+const MainLayout = () => (
+  <div className="flex flex-col min-h-screen">
+    <Header />
+    <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Outlet />
+    </main>
+    <Footer />
+  </div>
+);
+
+const App = () => {
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<PostList />} />
+          <Route path="post/:id" element={<PostDetail />} />
+        </Route>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="new" element={<PostEditor />} />
+          <Route path="edit/:id" element={<PostEditor />} />
+        </Route>
+      </Routes>
+    </HashRouter>
+  );
+};
+
+// --- From index.tsx ---
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// --- End of Combined Application Code ---
+    </script>
   </body>
 </html>
