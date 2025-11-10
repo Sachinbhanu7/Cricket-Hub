@@ -34,9 +34,12 @@
   }
 }
 </script>
+<!-- Added Babel to translate TSX for the browser -->
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 </head>
   <body class="bg-base-100 text-neutral">
     <div id="root"></div>
-    <script type="module" src="./index.js"></script>
+    <!-- Changed script type to let Babel handle it -->
+    <script type="text/babel" data-type="module" src="./index.tsx"></script>
   </body>
 </html>
